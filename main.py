@@ -3,9 +3,14 @@ import requests
 import pickle
 import json
 
+st.set_page_config(
+    page_title="Song Recommendation",
 
+    initial_sidebar_state="expanded",)
 
-music=pickle.load(open("music.pkl", "rb"))
+with open('music.pkl', 'rb') as f:
+    music=pickle.load(f)
+# music=pickle.load(open("music.pkl", "rb"))
 similarity=pickle.load(open("Surrounding.pkl", "rb"))
 st.title("🎶Get All your favourite songs")
 
@@ -29,18 +34,22 @@ def fetch_poster2(index):
             'entity':"song",
             "limit":1
         }
-        response=requests.get(url,params=params)
+        response=requests.get(url,params=params,timeout=8)
         data=response.json()
         if data['resultCount']>0:
-            poster_url=data['results'][0]['artworkUrl100']
+            result=data['results'][0]
+            poster_url=result['artworkUrl100']
             poster_url=poster_url.replace("100x100","600x600")
+            preview=result.get('previewUrl')
             poster_link=poster_url
         else:
             poster_link=None
+            preview=None
     except Exception as e:
         print("ERROR:", e)
         poster_link=None
-    return poster_link
+        preview=None
+    return poster_link, preview
 
 
 
@@ -68,15 +77,18 @@ st.session_state['name']=name
 
 if 'search_history' not in st.session_state:
     st.session_state.search_history=[]
-current_poster=fetch_poster2(selected_music[0])
+current_poster,audio=fetch_poster2(selected_music[0])
 
 if st.button("Similar Song"):
     with st.spinner("Loading similar song"):
 
         names,music_list_index=recommended(selected_music)
         poster=[]
+        preview=[]
         for fetch in music_list_index:
-            poster.append(fetch_poster2(fetch))
+            image,audio=fetch_poster2(fetch)
+            poster.append(image)
+            preview.append(audio)
 
 
 
@@ -93,17 +105,21 @@ if st.button("Similar Song"):
             with cols[col]:
                 st.text(names[index])
                 if poster[index]:
-                    st.image(poster[index],use_container_width=True)
+                    st.image(poster[index],width=200)
                 else:
                     st.write("no image Available")
+                if preview[index]:
+                    st.audio(preview[index])
+                else:
+                    st.write("no audio Available")
 
 
 
-
-with st.sidebar.expander("Searched History"):
+with st.sidebar.expander("Searched History",expanded=True):
     for song in st.session_state.search_history:
         st.write(song)
 
 
-st.sidebar.image(current_poster,use_container_width=True)
+st.sidebar.image(current_poster,width=200)
+st.sidebar.audio(audio)
 
