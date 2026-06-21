@@ -7,7 +7,7 @@ A machine learning-based music recommendation web application that suggests simi
 
 ## 🌐 Live Demo
 
-🔗 Add your Streamlit deployment link here
+🔗 https://song-recommendation-system-100.streamlit.app/
 
 ---
 
